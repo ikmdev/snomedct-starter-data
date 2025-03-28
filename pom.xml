@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>dev.ikm.build</groupId>
+		<artifactId>java-parent</artifactId>
+		<version>1.55.0</version>
+	</parent>
+
+	<groupId>dev.ikm.data.snomedct</groupId>
+	<artifactId>snomedct-starter-data</artifactId>
+	<version>${maven.build.timestamp}</version>
+	<packaging>pom</packaging>
+
+	<name>SnomedCT Starter Data Pipeline</name>
+	<description>SnomedCT Starter Data Pipeline Project</description>
+	<url>https://www.ikm.dev</url>
+
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+			<comments>A business-friendly OSS license</comments>
+		</license>
+	</licenses>
+
+	<developers>
+		<!-- OSSRH Related Developer (Start) -->
+		<developer>
+			<id>ikmdev</id>
+			<name>IKM Development Team</name>
+			<email>support@ikm.dev</email>
+		</developer>
+		<!-- OSSRH Related Developer (End) -->
+	</developers>
+
+	<scm>
+		<connection>scm:git:git://github.com/ikmdev/snomedct-starter-data.git</connection>
+		<developerConnection>scm:git:ssh://github.com:ikmdev/snomedct-starter-data.git</developerConnection>
+		<url>http://www.github.com/ikmdev/snomedct-starter-data</url>
+	</scm>
+
+	<properties>
+		<!-- Tinkar Starter Data Properties -->
+		<tinkar-starter-data.groupId>dev.ikm.data.tinkar</tinkar-starter-data.groupId>
+		<tinkar-starter-data.artifactId>tinkar-starter-data</tinkar-starter-data.artifactId>
+		<tinkar-starter-data.version>1.1.1</tinkar-starter-data.version>
+		<tinkar-starter-data.classifier>unreasoned-sa</tinkar-starter-data.classifier>
+		<!-- Plugin Versions -->
+		<tinkar-maven-artifacts.version>1.15.0</tinkar-maven-artifacts.version>
+		<maven-dependency-plugin>3.8.1</maven-dependency-plugin>
+		<maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
+		<properties-maven-plugin.version>1.2.1</properties-maven-plugin.version>
+		<build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
+		<!-- Properties for Ease of Use -->
+		<datastore.path>${project.build.directory}/${tinkar-starter-data.artifactId}-${tinkar-starter-data.version}-${tinkar-starter-data.classifier}</datastore.path>
+		<data-artifact.prefix>${project.artifactId}-${project.version}</data-artifact.prefix>
+		<maven.build.timestamp.format>yyyyMMdd</maven.build.timestamp.format>
+	</properties>
+
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>dev.ikm.maven.tinkar</groupId>
+					<artifactId>tinkar-maven-plugin</artifactId>
+					<version>${tinkar-maven-artifacts.version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-dependency-plugin</artifactId>
+					<version>${maven-dependency-plugin}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>properties-maven-plugin</artifactId>
+					<version>${properties-maven-plugin.version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>build-helper-maven-plugin</artifactId>
+					<version>${build-helper-maven-plugin.version}</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-tinkar-starter-data-dependency</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>${tinkar-starter-data.groupId}</groupId>
+									<artifactId>${tinkar-starter-data.artifactId}</artifactId>
+									<version>${tinkar-starter-data.version}</version>
+									<classifier>${tinkar-starter-data.classifier}</classifier>
+									<type>zip</type>
+									<overWrite>true</overWrite>
+									<outputDirectory>${project.build.directory}</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>templating-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>inject-maven-properties</id>
+						<goals>
+							<goal>filter-sources</goal>
+						</goals>
+						<configuration>
+							<sourceDirectory>data-artifact-pom-template</sourceDirectory>
+							<outputDirectory>${project.build.directory}</outputDirectory>
+							<skipPoms>false</skipPoms>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>dev.ikm.maven.tinkar</groupId>
+				<artifactId>tinkar-maven-plugin</artifactId>
+				<configuration>
+					<dataStore>${datastore.path}</dataStore>
+				</configuration>
+				<executions>
+					<!-- Import provided Snomed Starter Data -->
+					<execution>
+						<id>import-snomed-starter-data</id>
+						<goals>
+							<goal>load-data</goal>
+						</goals>
+						<configuration>
+							<!-- TODO: Update version to use FileSets parameter -->
+							<dataFiles>
+								<dataFile>data/test-tinkar-export-pb.zip</dataFile>
+							</dataFiles>
+						</configuration>
+					</execution>
+					<execution>
+						<id>unreasoned-export</id>
+						<phase>compile</phase> <!-- Overriding default phase to force this execution before reasoning -->
+						<goals>
+							<goal>export-tinkar-data</goal>
+						</goals>
+						<configuration>
+							<exportDirectory>${project.build.directory}</exportDirectory>
+							<fileName>${data-artifact.prefix}-unreasoned-pb.zip</fileName>
+						</configuration>
+					</execution>
+					<!-- Run full reasoner -->
+					<execution>
+						<id>full-reasoner</id>
+						<goals>
+							<goal>run-full-reasoner</goal>
+						</goals>
+					</execution>
+					<!-- Export data as a protocol buffers zip file -->
+					<execution>
+						<id>reasoned-export</id>
+						<goals>
+							<goal>export-tinkar-data</goal>
+						</goals>
+						<configuration>
+							<exportDirectory>${project.build.directory}</exportDirectory>
+							<fileName>${data-artifact.prefix}-reasoned-pb.zip</fileName>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<finalName>${data-artifact.prefix}</finalName>
+					<inlineDescriptors>
+						<inlineDescriptor>
+							<formats>
+								<format>zip</format>
+							</formats>
+							<fileSets>
+								<fileSet>
+									<directory>${datastore.path}</directory>
+									<includes>
+										<include>**</include>
+									</includes>
+									<excludes>
+										<exclude>lucene/**</exclude>
+									</excludes>
+								</fileSet>
+							</fileSets>
+							<includeBaseDirectory>false</includeBaseDirectory>
+						</inlineDescriptor>
+					</inlineDescriptors>
+				</configuration>
+				<executions>
+					<!-- Zip up unreasoned spinedarray database -->
+					<execution>
+						<id>unreasoned-sa-zip</id>
+						<phase>compile</phase> <!-- Overriding default phase: force this execution before reasoning -->
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<inlineDescriptors>
+								<inlineDescriptor>
+									<id>unreasoned-sa</id>
+									<fileSets>
+										<fileSet>
+											<outputDirectory>${data-artifact.prefix}-unreasoned-sa</outputDirectory>
+										</fileSet>
+									</fileSets>
+								</inlineDescriptor>
+							</inlineDescriptors>
+						</configuration>
+					</execution>
+					<!-- Zip up reasoned spinedarray database -->
+					<execution>
+						<phase>package</phase>
+						<id>reasoned-sa-zip</id>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<inlineDescriptors>
+								<inlineDescriptor>
+									<id>reasoned-sa</id>
+									<fileSets>
+										<fileSet>
+											<outputDirectory>${data-artifact.prefix}-reasoned-sa</outputDirectory>
+										</fileSet>
+									</fileSets>
+								</inlineDescriptor>
+							</inlineDescriptors>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>3.6.0</version>
+				<executions>
+					<execution>
+						<id>attach-artifacts</id>
+						<phase>package</phase>
+						<goals>
+							<goal>attach-artifact</goal>
+						</goals>
+						<configuration>
+							<artifacts>
+								<artifact>
+									<file>${project.build.directory}/${data-artifact.prefix}-reasoned-pb.zip</file>
+									<type>zip</type>
+									<classifier>reasoned-pb</classifier>
+								</artifact>
+								<artifact>
+									<file>${project.build.directory}/${data-artifact.prefix}-unreasoned-pb.zip</file>
+									<type>zip</type>
+									<classifier>unreasoned-pb</classifier>
+								</artifact>
+							</artifacts>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Skip Staging Plugin-->
+			<plugin>
+				<groupId>org.sonatype.plugins</groupId>
+				<artifactId>nexus-staging-maven-plugin</artifactId>
+				<inherited>false</inherited>
+			</plugin>
+		</plugins>
+	</build>
+
+	<profiles>
+		<profile>
+			<id>localDeploy</id>
+			<distributionManagement>
+				<repository>
+					<id>local-release</id>
+					<name>Local Release Repository</name>
+					<url>file:${project.build.directory}/local_deploy_repo/release</url>
+				</repository>
+				<snapshotRepository>
+					<id>local-snapshot</id>
+					<name>Local SNAPSHOT Repository</name>
+					<url>file:${project.build.directory}/local_deploy_repo/snapshot</url>
+				</snapshotRepository>
+			</distributionManagement>
+		</profile>
+	</profiles>
+
+</project>
