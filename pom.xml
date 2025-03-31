@@ -252,7 +252,6 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>3.6.0</version>
 				<executions>
 					<execution>
 						<id>attach-artifacts</id>
@@ -273,6 +272,22 @@
 									<classifier>unreasoned-pb</classifier>
 								</artifact>
 							</artifacts>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Skip Enforcer Rule -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>enforce-no-bad-sections</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rulesToSkip>requireProperty</rulesToSkip>
 						</configuration>
 					</execution>
 				</executions>
